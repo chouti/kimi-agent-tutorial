@@ -1,0 +1,42 @@
+{
+  "file_reader": {
+    "name": "file_reader",
+    "description": "Read file contents",
+    "endpoint": "local",
+    "capabilities": [
+      "read",
+      "text_processing"
+    ],
+    "metadata": {
+      "type": "builtin",
+      "priority": "high"
+    }
+  },
+  "file_writer": {
+    "name": "file_writer",
+    "description": "Write or edit file contents",
+    "endpoint": "local",
+    "capabilities": [
+      "write",
+      "edit",
+      "create"
+    ],
+    "metadata": {
+      "type": "builtin",
+      "priority": "high"
+    }
+  },
+  "directory_lister": {
+    "name": "directory_lister",
+    "description": "List directory contents",
+    "endpoint": "local",
+    "capabilities": [
+      "list",
+      "directory"
+    ],
+    "metadata": {
+      "type": "builtin",
+      "priority": "high"
+    }
+  }
+}

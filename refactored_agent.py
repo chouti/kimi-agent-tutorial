@@ -127,7 +127,8 @@ class BusinessLogicAgent:
         service_mapping = {
             "read_file": "file_reader",
             "list_files": "directory_lister", 
-            "edit_file": "file_writer"
+            "edit_file": "file_writer",
+            "git_status": "git_service"
         }
         
         available_tools = []

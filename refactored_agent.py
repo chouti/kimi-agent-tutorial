@@ -383,8 +383,11 @@ class BusinessLogicAgent:
                         
                         print(f"🤖 Kimi wants to use tool: {tool_name}({json.dumps(tool_args, indent=2)})")
                         
-                        # Execute via MCP
+# Execute via MCP with interactive confirmation for shell commands
                         try:
+                            # Add interactive mode for shell commands
+                            if tool_name == "execute_command":
+                                tool_args["interactive_mode"] = True
                             tool_result = self._execute_tool_via_mcp(tool_name, tool_args)
                             tool_results.append({
                                 "tool_call_id": tool_call.id,

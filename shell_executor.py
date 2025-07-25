@@ -161,8 +161,9 @@ class ShellExecutor:
     
     def execute_command(self, command: str, cwd: Optional[str] = None, 
                        timeout: Optional[int] = None, 
-                       capture_output: bool = True) -> CommandResult:
-        """Execute a shell command with security validation"""
+                       capture_output: bool = True,
+                       interactive_mode: bool = False) -> CommandResult:
+        """Execute a shell command with security validation and optional user confirmation"""
         
         import time
         start_time = time.time()
@@ -181,6 +182,46 @@ class ShellExecutor:
                 security_level=SecurityLevel.BLOCKED,
                 blocked_reason=security_result['decision_reason']
             )
+        
+        # Interactive confirmation for moderate risk commands
+        if interactive_mode and security_result["final_security_level"] in ["MODERATE", "RESTRICTED"]:
+            requires_confirmation = security_result.get("requires_confirmation", True)
+            risk_score = security_result.get("risk_score", 50)
+            
+            if requires_confirmation and risk_score > 30:
+                print(f"\n⚠️  命令安全分析结果:")
+                print(f"   命令: {command}")
+                print(f"   风险等级: {security_result['final_security_level']}")
+                print(f"   风险评分: {risk_score}/100")
+                print(f"   分析结果: {security_result.get('decision_reason', '需要确认')}")
+                
+                if "alternatives" in security_result:
+                    print(f"   建议替代: {security_result['alternatives']}")
+                
+                try:
+                    user_input = input("\n   是否继续执行? [y/N]: ").strip().lower()
+                    if user_input not in ['y', 'yes', '是']:
+                        return CommandResult(
+                            command=command,
+                            status=CommandStatus.BLOCKED,
+                            stdout="",
+                            stderr="Command cancelled by user",
+                            return_code=130,
+                            execution_time=time.time() - start_time,
+                            security_level=SecurityLevel.BLOCKED,
+                            blocked_reason="User cancelled execution"
+                        )
+                except (KeyboardInterrupt, EOFError):
+                    return CommandResult(
+                        command=command,
+                        status=CommandStatus.BLOCKED,
+                        stdout="",
+                        stderr="Command cancelled by user interruption",
+                        return_code=130,
+                        execution_time=time.time() - start_time,
+                        security_level=SecurityLevel.BLOCKED,
+                        blocked_reason="User interrupted"
+                    )
         
         # Sanitize command
         sanitized_command = self.security.sanitize_command(command)

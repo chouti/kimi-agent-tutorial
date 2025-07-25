@@ -2,35 +2,62 @@
 
 一个基于MCP（Model Context Protocol）服务发现架构重构的Kimi AI Agent，实现业务逻辑与服务管理的完全解耦。
 
-## 🎯 项目最新进展
+## 🎯 项目最新状态
 
-### ✅ 已实现的核心功能
-- **MCP服务发现系统** - 完整的服务注册与发现机制
-- **Git版本控制服务** - 新增git_service，支持完整的Git操作
-- **模块化架构** - 业务逻辑与服务操作完全分离
-- **动态服务加载** - 运行时服务发现，无需重启Agent
+### ✅ 核心架构完成
+项目已完成从单体架构到**MCP服务化架构**的全面重构，实现了业务逻辑与服务操作的完全解耦。
 
-### 🆕 新增MCP服务
-1. **git_service** - Git版本控制操作
-   - ✅ 仓库状态检查
-   - ✅ 文件提交管理
-   - ✅ 分支操作
-   - ✅ 远程推送/拉取
-   - ✅ 日志查看
-   - ✅ 差异比较
+### 🏗️ 已实现的完整MCP服务套件
 
-2. **shell_executor** - 安全shell执行
+#### 📁 文件操作系统服务
+1. **file_reader** - 安全文件读取服务
+   - ✅ UTF-8/GBK多编码支持
+   - ✅ 文件大小限制保护
+   - ✅ 路径遍历攻击防护
+   - ✅ 编码自动检测
+
+2. **file_writer** - 安全文件写入服务
+   - ✅ 文件创建、编辑、追加
+   - ✅ 内容替换和增量更新
+   - ✅ 目录自动创建
+   - ✅ 路径安全验证
+
+3. **directory_lister** - 目录浏览服务
+   - ✅ 递归目录遍历
+   - ✅ 文件信息详细展示
+   - ✅ 权限和大小检查
+   - ✅ 隐藏文件处理
+
+#### 🔄 版本控制系统服务
+4. **git_service** - Git版本控制操作
+   - ✅ 完整Git工作流支持
+   - ✅ 分支创建与管理
+   - ✅ 远程仓库操作
+   - ✅ 状态检查和差异比较
+   - ✅ UTF-8/GBK编码兼容
+   - ✅ 路径遍历保护
+
+#### 🔒 安全执行系统服务
+5. **shell_executor** - 安全Shell执行服务
    - ✅ 智能LLM安全分析
    - ✅ 多层级安全策略
-   - ✅ 风险评分和解释
-   - ✅ 安全替代方案推荐
+   - ✅ 风险评分系统
+   - ✅ 危险命令拦截
    - ✅ 系统信息获取
    - ✅ 文件和目录操作
 
-3. **内置基础服务**
-   - ✅ file_reader - 文件读取
-   - ✅ file_writer - 文件写入/编辑
-   - ✅ directory_lister - 目录列表
+#### 🔍 服务发现管理
+6. **mcp_service_discovery** - MCP服务发现核心
+   - ✅ 动态服务注册
+   - ✅ 能力匹配发现
+   - ✅ 运行时服务加载
+   - ✅ 标准化服务接口
+
+### 🧹 项目结构优化
+- ✅ 移除所有冗余文件（JavaScript测试文件、演示GIF等）
+- ✅ 保留核心MCP架构文件
+- ✅ 清理项目根目录，专注核心业务
+- ✅ main.py保留作为兼容性备份
 
 ## 🏗️ 架构设计
 
@@ -46,14 +73,20 @@
 ### 📁 核心文件结构
 ```
 kimi-agent/
-├── 📄 main.py                    # 原始单体版本（保留兼容）
-├── 📄 refactored_agent.py        # MCP重构版本
-├── 📄 mcp_service_discovery.py   # MCP服务发现核心
+├── 📄 refactored_agent.py        # MCP重构版本（主要入口）
+├── 📄 main.py                    # 原始版本（兼容性备份）
+├── 📄 mcp_service_discovery.py   # MCP服务发现核心引擎
 ├── 📄 git_service.py             # Git版本控制服务
-├── 📄 shell_executor.py          # 安全shell执行服务
+├── 📄 shell_executor.py          # 安全Shell执行服务
+├── 📄 file_reader.py             # 安全文件读取服务
+├── 📄 file_writer.py             # 安全文件写入服务
+├── 📄 directory_lister.py        # 目录浏览服务
 ├── 📄 llm_security_analyzer.py   # LLM安全分析器
-├── 📄 .mcp_registry.json         # 服务注册表
-└── 📄 requirements.txt           # 依赖管理
+├── 📄 .mcp_registry.json         # 服务注册表（自动生成）
+├── 📄 requirements.txt           # 依赖清单
+├── 📄 README.md                  # 项目文档
+├── 📄 COMMIT_MESSAGE.md          # 提交信息记录
+└── 📄 GIT_STATUS.md              # Git状态记录
 ```
 
 ## 🚀 快速开始
@@ -82,6 +115,18 @@ python main.py
 - `quit` - 退出Agent
 - `services` - 查看可用MCP服务列表
 - 直接对话 - Agent会自动选择合适的服务
+
+### 运行模式
+```bash
+# 交互模式（推荐）
+python refactored_agent.py
+
+# 命令行模式（单次执行）
+python refactored_agent.py "帮我查看当前目录"
+
+# 测试服务发现
+python -c "from mcp_service_discovery import get_service_manager; [print(f'{s.name}: {s.description}') for s in get_service_manager().discovery.list_services()]"
+```
 
 ## 🔧 开发指南
 

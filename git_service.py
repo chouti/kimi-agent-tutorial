@@ -44,34 +44,70 @@ class GitService:
     def _run_git_command(self, args: List[str], cwd: Optional[str] = None, timeout: int = 30) -> Dict[str, Any]:
         """Execute a git command and return results with proper encoding"""
         try:
+            # Validate cwd parameter to prevent path traversal
+            if cwd:
+                import pathlib
+                cwd_path = pathlib.Path(cwd).resolve()
+                current_path = pathlib.Path.cwd().resolve()
+                if not str(cwd_path).startswith(str(current_path)):
+                    return {
+                        "success": False,
+                        "stdout": "",
+                        "stderr": "Path traversal detected",
+                        "returncode": 403
+                    }
+            
+            # Try multiple encodings for better compatibility
+            encodings = ['utf-8', 'gbk', 'gb2312', 'latin1']
+            
+            for encoding in encodings:
+                try:
+                    result = subprocess.run(
+                        ["git"] + args,
+                        cwd=cwd or os.getcwd(),
+                        capture_output=True,
+                        text=True,
+                        encoding=encoding,
+                        errors='strict',
+                        check=True,
+                        timeout=timeout
+                    )
+                    return {
+                        "success": True,
+                        "stdout": result.stdout.strip(),
+                        "stderr": result.stderr.strip(),
+                        "returncode": result.returncode
+                    }
+                except UnicodeDecodeError:
+                    continue
+            
+            # Fallback to bytes if all encodings fail
             result = subprocess.run(
                 ["git"] + args,
                 cwd=cwd or os.getcwd(),
                 capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
                 check=True,
                 timeout=timeout
             )
             return {
                 "success": True,
-                "stdout": result.stdout.strip(),
-                "stderr": result.stderr.strip(),
+                "stdout": result.stdout.decode('utf-8', errors='replace').strip(),
+                "stderr": result.stderr.decode('utf-8', errors='replace').strip(),
                 "returncode": result.returncode
             }
+            
         except subprocess.TimeoutExpired as e:
             return {
                 "success": False,
-                "stdout": e.stdout.strip() if e.stdout else "",
+                "stdout": e.stdout.decode('utf-8', errors='replace').strip() if e.stdout else "",
                 "stderr": f"Command timed out after {timeout} seconds",
                 "returncode": 124
             }
         except subprocess.CalledProcessError as e:
             return {
                 "success": False,
-                "stdout": e.stdout.strip() if e.stdout else "",
-                "stderr": e.stderr.strip() if e.stderr else str(e),
+                "stdout": e.stdout.decode('utf-8', errors='replace').strip() if e.stdout else "",
+                "stderr": e.stderr.decode('utf-8', errors='replace').strip() if e.stderr else str(e),
                 "returncode": e.returncode
             }
         except FileNotFoundError:
@@ -82,8 +118,33 @@ class GitService:
                 "returncode": 127
             }
     
+    def _validate_branch_name(self, branch_name: str) -> bool:
+        """Validate branch name to prevent injection"""
+        if not branch_name:
+            return False
+        # Basic validation: no spaces, special chars, or path traversal
+        import re
+        return bool(re.match(r'^[a-zA-Z0-9_-]+$', branch_name))
+    
+    def _validate_file_path(self, file_path: str) -> bool:
+        """Validate file path to prevent path traversal"""
+        if not file_path:
+            return True  # Empty is valid for some commands
+        
+        import pathlib
+        try:
+            path = pathlib.Path(file_path)
+            # Check for absolute paths or parent directory references
+            if path.is_absolute() or '..' in str(path):
+                return False
+            return True
+        except Exception:
+            return False
+
     def is_git_repository(self, path: str = None) -> bool:
         """Check if the given path is a git repository"""
+        if path and not self._validate_file_path(path):
+            return False
         result = self._run_git_command(["rev-parse", "--git-dir"], cwd=path)
         return result["success"]
     
@@ -156,10 +217,17 @@ class GitService:
         if not self.is_git_repository(path):
             return {"error": "Not a git repository"}
         
+        if path and not self._validate_file_path(path):
+            return {"error": "Invalid path"}
+        
         if files is None:
             # Add all files
             result = self._run_git_command(["add", "."], cwd=path)
         else:
+            # Validate all file paths
+            for file_path in files:
+                if not self._validate_file_path(file_path):
+                    return {"error": f"Invalid file path: {file_path}"}
             # Add specific files
             result = self._run_git_command(["add"] + files, cwd=path)
         
@@ -227,6 +295,12 @@ class GitService:
         """Create a new branch"""
         if not self.is_git_repository(path):
             return {"error": "Not a git repository"}
+        
+        if not self._validate_branch_name(branch_name):
+            return {"error": "Invalid branch name. Use only alphanumeric characters, hyphens, and underscores"}
+        
+        if path and not self._validate_file_path(path):
+            return {"error": "Invalid path"}
         
         result = self._run_git_command(["checkout", "-b", branch_name], cwd=path)
         return result

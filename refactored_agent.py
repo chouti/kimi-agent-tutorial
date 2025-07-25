@@ -109,6 +109,17 @@ class BusinessLogicAgent:
                         "required": ["path", "old_content", "new_content"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "git_status",
+                    "description": "Get the current git repository status including branch, changes, and staged files.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
             }
         ]
         
@@ -137,7 +148,8 @@ class BusinessLogicAgent:
             service_mapping = {
                 "read_file": ("file_reader", "file_reader"),
                 "edit_file": ("file_writer", "file_writer"), 
-                "list_files": ("directory_lister", "directory_lister")
+                "list_files": ("directory_lister", "directory_lister"),
+                "git_status": ("git_service", "git_service")
             }
             
             service_info = service_mapping.get(tool_name)
@@ -177,6 +189,9 @@ class BusinessLogicAgent:
                 elif tool_name == "list_files":
                     from directory_lister import get_directory_lister
                     return get_directory_lister().list_directory(mapped_params.get('path', '.'))
+                elif tool_name == "git_status":
+                    from git_service import get_git_service
+                    return get_git_service().get_status()
                 else:
                     # Fallback to generic execute method on service instance
                     return str(service.execute(mapped_params))
@@ -202,6 +217,8 @@ class BusinessLogicAgent:
             }
         elif tool_name == "list_files":
             return {"path": parameters.get("path", ".")}
+        elif tool_name == "git_status":
+            return {}
         return parameters
     
     def _get_tool_definitions_for_llm(self) -> list:

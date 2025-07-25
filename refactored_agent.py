@@ -336,6 +336,17 @@ class BusinessLogicAgent:
     def process_user_input(self, user_input: str) -> str:
         """Process user input using business logic and MCP services"""
         
+        # Validate and clean user input
+        user_input = user_input.strip()
+        if not user_input:
+            return "请输入有效的内容"
+        
+        # Clean conversation history of empty messages
+        self.conversation_history = [
+            msg for msg in self.conversation_history 
+            if not (isinstance(msg, dict) and msg.get("role") == "user" and not msg.get("content", "").strip())
+        ]
+        
         # Add user message to conversation
         self.conversation_history.append({"role": "user", "content": user_input})
         
@@ -428,9 +439,20 @@ class BusinessLogicAgent:
             return current_message.content or "处理完成，但没有生成回复"
             
         except Exception as e:
-            error_msg = f"Error processing request: {str(e)}"
-            logger.error(error_msg)
-            return error_msg
+            error_msg = str(e)
+            
+            # Handle specific API errors
+            if "400" in error_msg and "message at position" in error_msg:
+                error_msg = "请求格式错误：请确保输入内容完整后再试"
+            elif "401" in error_msg:
+                error_msg = "API认证失败，请检查API密钥配置"
+            elif "429" in error_msg:
+                error_msg = "请求过于频繁，请稍后再试"
+            elif "500" in error_msg:
+                error_msg = "服务器内部错误，请稍后重试"
+            
+            logger.error(f"Error processing request: {error_msg}")
+            return f"处理请求时发生错误: {error_msg}"
     
     def get_service_info(self) -> Dict[str, Any]:
         """Get information about available MCP services"""
@@ -474,6 +496,9 @@ class BusinessLogicAgent:
             try:
                 user_input = input("\n🙂 You: ").strip()
                 
+                if not user_input:
+                    continue
+                    
                 if user_input.lower() == 'quit':
                     break
                 elif user_input.lower() == 'services':
@@ -490,12 +515,31 @@ class BusinessLogicAgent:
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
                 break
+            except EOFError:
+                print("\n👋 检测到输入结束，再见!")
+                break
             except Exception as e:
                 print(f"\n❌ Error: {e}")
+
+    def run_single_command(self, command: str) -> str:
+        """Run a single command in non-interactive mode"""
+        try:
+            return self.process_user_input(command)
+        except Exception as e:
+            return f"执行命令时出错: {str(e)}"
 
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
     
     agent = BusinessLogicAgent()
-    agent.run_interactive()
+    
+    # Support both interactive and command-line modes
+    import sys
+    if len(sys.argv) > 1:
+        # Command-line mode
+        command = " ".join(sys.argv[1:])
+        print(agent.run_single_command(command))
+    else:
+        # Interactive mode
+        agent.run_interactive()

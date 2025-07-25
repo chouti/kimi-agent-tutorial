@@ -62,5 +62,34 @@
       "priority": "high",
       "category": "version_control"
     }
+  },
+  "shell_executor": {
+    "name": "shell_executor",
+    "description": "Secure shell command execution with LLM-enhanced safety controls and multi-layer security",
+    "endpoint": "custom",
+    "capabilities": [
+      "execute",
+      "system_info",
+      "list_processes",
+      "directory_operations",
+      "file_operations",
+      "disk_usage",
+      "process_management",
+      "network_info",
+      "llm_security_analysis"
+    ],
+    "metadata": {
+      "type": "builtin",
+      "priority": "high",
+      "category": "system_operations",
+      "security_level": "moderate",
+      "timeout": 30,
+      "max_output_size": 1048576,
+      "features": [
+        "llm_security",
+        "pattern_matching",
+        "risk_scoring"
+      ]
+    }
   }
 }

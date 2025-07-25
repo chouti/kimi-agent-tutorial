@@ -353,13 +353,13 @@ class ShellExecutor:
             return {"error": str(e)}
     
     def validate_path(self, path: str) -> bool:
-        """Validate if path is within allowed directories"""
+        """Validate if path is within allowed directories with symlink protection"""
         try:
-            abs_path = os.path.abspath(path)
-            working_abs = os.path.abspath(self.working_dir)
+            abs_path = Path(path).resolve()
+            working_abs = Path(self.working_dir).resolve()
             
             # Check if path is within working directory
-            return abs_path.startswith(working_abs)
+            return str(abs_path).startswith(str(working_abs))
         except Exception:
             return False
     

@@ -1,42 +1,58 @@
 {
   "file_reader": {
     "name": "file_reader",
-    "description": "Read file contents",
-    "endpoint": "local",
+    "description": "Secure file reading with encoding support and path validation",
+    "endpoint": "custom",
     "capabilities": [
       "read",
-      "text_processing"
+      "text_processing",
+      "encoding_detection"
     ],
     "metadata": {
       "type": "builtin",
-      "priority": "high"
+      "priority": "high",
+      "max_file_size": 1048576,
+      "supported_encodings": [
+        "utf-8",
+        "gbk",
+        "gb2312",
+        "latin1"
+      ]
     }
   },
   "file_writer": {
     "name": "file_writer",
-    "description": "Write or edit file contents",
-    "endpoint": "local",
+    "description": "Secure file writing, editing, and creation with path validation",
+    "endpoint": "custom",
     "capabilities": [
       "write",
       "edit",
-      "create"
+      "create",
+      "append",
+      "replace"
     ],
     "metadata": {
       "type": "builtin",
-      "priority": "high"
+      "priority": "high",
+      "encoding": "utf-8",
+      "max_file_size": 10485760
     }
   },
   "directory_lister": {
     "name": "directory_lister",
-    "description": "List directory contents",
-    "endpoint": "local",
+    "description": "Secure directory listing and file information with path validation",
+    "endpoint": "custom",
     "capabilities": [
       "list",
-      "directory"
+      "directory",
+      "file_info",
+      "metadata"
     ],
     "metadata": {
       "type": "builtin",
-      "priority": "high"
+      "priority": "high",
+      "include_hidden": false,
+      "max_items": 1000
     }
   },
   "git_service": {

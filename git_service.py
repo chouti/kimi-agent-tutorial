@@ -41,21 +41,31 @@ class GitService:
             "diff", "add", "reset", "clone", "init"
         ]
     
-    def _run_git_command(self, args: List[str], cwd: Optional[str] = None) -> Dict[str, Any]:
-        """Execute a git command and return results"""
+    def _run_git_command(self, args: List[str], cwd: Optional[str] = None, timeout: int = 30) -> Dict[str, Any]:
+        """Execute a git command and return results with proper encoding"""
         try:
             result = subprocess.run(
                 ["git"] + args,
                 cwd=cwd or os.getcwd(),
                 capture_output=True,
                 text=True,
-                check=True
+                encoding='utf-8',
+                errors='replace',
+                check=True,
+                timeout=timeout
             )
             return {
                 "success": True,
                 "stdout": result.stdout.strip(),
                 "stderr": result.stderr.strip(),
                 "returncode": result.returncode
+            }
+        except subprocess.TimeoutExpired as e:
+            return {
+                "success": False,
+                "stdout": e.stdout.strip() if e.stdout else "",
+                "stderr": f"Command timed out after {timeout} seconds",
+                "returncode": 124
             }
         except subprocess.CalledProcessError as e:
             return {

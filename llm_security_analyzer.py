@@ -197,16 +197,20 @@ class LLMSecurityAnalyzer:
             }
     
     def analyze_command(self, command: str, context: Dict[str, Any] = None) -> LLMSecurityAnalysis:
-        """Analyze command security using LLM (sync wrapper)"""
+        """Analyze command security using LLM (sync wrapper with proper loop handling)"""
         
-        # Run async analysis
+        # Run async analysis with proper loop handling
         import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
         try:
             result = loop.run_until_complete(self._analyze_with_llm(command, context))
         finally:
-            loop.close()
+            pass  # Don't close loop if it was already running
         
         # Map string security level to enum
         level_map = {

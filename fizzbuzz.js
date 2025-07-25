@@ -5,7 +5,7 @@
 // - 能被3和5同时整除的打印"FizzBuzz"
 
 function fizzBuzz() {
-    for (let i = 1; i <= 15; i++) {
+    for (let i = 1; i <= 50; i++) {
         let output = '';
         
         if (i % 3 === 0) {

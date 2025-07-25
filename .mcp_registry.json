@@ -38,5 +38,29 @@
       "type": "builtin",
       "priority": "high"
     }
+  },
+  "git_service": {
+    "name": "git_service",
+    "description": "Git version control operations including status, commit, push, pull, branch management, and more",
+    "endpoint": "custom",
+    "capabilities": [
+      "status",
+      "commit",
+      "push",
+      "pull",
+      "branch",
+      "log",
+      "diff",
+      "add",
+      "reset",
+      "clone",
+      "init",
+      "repository_management"
+    ],
+    "metadata": {
+      "type": "builtin",
+      "priority": "high",
+      "category": "version_control"
+    }
   }
 }

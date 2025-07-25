@@ -120,6 +120,54 @@ class BusinessLogicAgent:
                         "properties": {}
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "git_add",
+                    "description": "Add files to git staging area",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "files": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Files to add (optional, defaults to all changes)"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "git_commit",
+                    "description": "Commit staged changes with a message",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "Commit message"
+                            }
+                        },
+                        "required": ["message"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "git_push",
+                    "description": "Push changes to remote repository",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "remote": {"type": "string", "default": "origin"},
+                            "branch": {"type": "string", "description": "Branch to push (optional)"}
+                        }
+                    }
+                }
             }
         ]
         
@@ -128,7 +176,10 @@ class BusinessLogicAgent:
             "read_file": "file_reader",
             "list_files": "directory_lister", 
             "edit_file": "file_writer",
-            "git_status": "git_service"
+            "git_status": "git_service",
+            "git_add": "git_service",
+            "git_commit": "git_service",
+            "git_push": "git_service"
         }
         
         available_tools = []
@@ -150,7 +201,10 @@ class BusinessLogicAgent:
                 "read_file": ("file_reader", "file_reader"),
                 "edit_file": ("file_writer", "file_writer"), 
                 "list_files": ("directory_lister", "directory_lister"),
-                "git_status": ("git_service", "git_service")
+                "git_status": ("git_service", "git_service"),
+                "git_add": ("git_service", "git_service"),
+                "git_commit": ("git_service", "git_service"),
+                "git_push": ("git_service", "git_service")
             }
             
             service_info = service_mapping.get(tool_name)
@@ -193,6 +247,22 @@ class BusinessLogicAgent:
                 elif tool_name == "git_status":
                     from git_service import get_git_service
                     return get_git_service().get_status()
+                elif tool_name == "git_add":
+                    from git_service import get_git_service
+                    files = mapped_params.get('files')
+                    if files:
+                        return get_git_service().add_files(files)
+                    else:
+                        return get_git_service().add_files()
+                elif tool_name == "git_commit":
+                    from git_service import get_git_service
+                    message = mapped_params.get('message', '')
+                    return get_git_service().commit_changes(message)
+                elif tool_name == "git_push":
+                    from git_service import get_git_service
+                    remote = mapped_params.get('remote', 'origin')
+                    branch = mapped_params.get('branch')
+                    return get_git_service().push_changes(remote, branch)
                 else:
                     # Fallback to generic execute method on service instance
                     return str(service.execute(mapped_params))
@@ -220,6 +290,15 @@ class BusinessLogicAgent:
             return {"path": parameters.get("path", ".")}
         elif tool_name == "git_status":
             return {}
+        elif tool_name == "git_add":
+            return {"files": parameters.get("files")}
+        elif tool_name == "git_commit":
+            return {"message": parameters.get("message", "")}
+        elif tool_name == "git_push":
+            return {
+                "remote": parameters.get("remote", "origin"),
+                "branch": parameters.get("branch")
+            }
         return parameters
     
     def _get_tool_definitions_for_llm(self) -> list:
